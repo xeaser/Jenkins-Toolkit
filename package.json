@@ -3,21 +3,70 @@
   "displayName": "Jenkins-Toolkit",
   "description": "All things jenkins",
   "version": "0.0.1",
+  "publisher": "Parag Sharma",
   "engines": {
     "vscode": "^1.99.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "jenkins-toolkit.helloWorld",
-        "title": "Hello World"
+        "command": "jenkinsBuildStatus.configure",
+        "title": "Configure Jenkins"
+      },
+      {
+        "command": "jenkinsBuildStatus.setApiToken",
+        "title": "Jenkins API Token"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Jenkins Configuration",
+      "properties": {
+        "jenkinsBuildStatus.jenkinsUrl": {
+          "type": "string",
+          "default": "",
+          "description": "The URL of your Jenkins server (e.g., http://your-jenkins-server.com)."
+        },
+        "jenkinsBuildStatus.username": {
+          "type": "string",
+          "default": "",
+          "description": "Your Jenkins username for API access."
+        },
+        "jenkinsBuildStatus.repositoryMappings": {
+          "type": "array",
+          "default": [],
+          "description": "Map workspace folder names to Jenkins job names.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "workspaceFolderName": {
+                "type": "string",
+                "description": "The name of the workspace folder (e.g., 'my-project')."
+              },
+              "jenkinsJobName": {
+                "type": "string",
+                "description": "The corresponding Jenkins job name (e.g., 'MyProject-Build')."
+              }
+            },
+            "required": [
+              "workspaceFolderName",
+              "jenkinsJobName"
+            ]
+          }
+        },
+        "jenkinsBuildStatus.pollingInterval": {
+          "type": "number",
+          "default": 30000,
+          "description": "The polling interval in milliseconds to check Jenkins build status."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
@@ -34,16 +83,21 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.99.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
+    "@types/vscode": "^1.99.0",
     "@typescript-eslint/eslint-plugin": "^8.28.0",
     "@typescript-eslint/parser": "^8.28.0",
-    "eslint": "^9.23.0",
-    "esbuild": "^0.25.1",
-    "npm-run-all": "^4.1.5",
-    "typescript": "^5.8.2",
     "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1"
+    "@vscode/test-electron": "^2.4.1",
+    "esbuild": "^0.25.1",
+    "eslint": "^9.23.0",
+    "glob": "^10.3.10",
+    "mocha": "^10.3.0",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
   }
 }
