@@ -9,6 +9,7 @@ export interface RepositoryMapping {
 export interface JenkinsConfiguration {
   jenkinsUrl: string;
   username: string;
+  // Removed: userEmail: string; // Removed user email from configuration
   repositoryMappings: RepositoryMapping[];
   pollingInterval: number;
 }
@@ -20,6 +21,13 @@ export interface JenkinsBuild {
   result: string | null; // "SUCCESS", "FAILURE", "ABORTED", null (for building)
   timestamp: number; // Build start time in milliseconds
   duration: number; // Build duration in milliseconds
+  changeSets?: Array<{ // Added changeSets property
+    items?: Array<{ // Array of changes in the change set
+      msg?: string;
+      authorEmail?: string; // Author's email
+      commitId?: string;
+    }>;
+  }>;
 }
 
 // Tree View Item types
@@ -42,13 +50,14 @@ export class JenkinsJobItem extends vscode.TreeItem {
 // Represents a Jenkins build in the Tree View
 export class JenkinsBuildItem extends vscode.TreeItem {
   constructor(
-    public readonly label: string, // Build display (e.g., #123 - SUCCESS)
+    public readonly commitId: string,
+    public readonly msg: string,
     public readonly build: JenkinsBuild,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly jobName: string // Parent job name
   ) {
-    super(label, collapsibleState);
-    this.tooltip = `#${build.number} - ${build.result || 'BUILDING'}\nDuration: ${formatDuration(build.duration)}\nStart Time: ${formatTimestamp(build.timestamp)}`;
+    super(commitId.substring(0, 7), collapsibleState);
+    this.tooltip = `#${build.number} - ${build.result || 'BUILDING'}\nCommit Message: ${msg}\nDuration: ${formatDuration(build.duration)}\nStart Time: ${formatTimestamp(build.timestamp)}`;
     this.description = `#${build.number} - ${build.result || 'BUILDING'}`;
 
     // Set icon based on build result

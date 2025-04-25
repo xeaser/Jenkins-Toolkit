@@ -44,8 +44,9 @@ export class JenkinsTreeDataProvider implements vscode.TreeDataProvider<JenkinsT
         const username = config.username;
         const apiToken = await getJenkinsApiToken(this.secretStorage);
         const workspaceFolders = vscode.workspace.workspaceFolders;
+        const configuredUsername = config.username.toLowerCase();
 
-        if (!jenkinsUrl || !username || !apiToken) {
+        if (!jenkinsUrl || !username) {
             // Show a message in the tree view if configuration is missing
             return [new vscode.TreeItem('Please configure Jenkins settings', vscode.TreeItemCollapsibleState.None)];
         }
@@ -95,9 +96,27 @@ export class JenkinsTreeDataProvider implements vscode.TreeDataProvider<JenkinsT
             }
 
             if (builds && builds.length > 0) {
-                // Sort builds by number in descending order
-                builds.sort((a, b) => b.number - a.number);
-                return builds.map(build => new JenkinsBuildItem(`#${build.number}`, build, vscode.TreeItemCollapsibleState.None, jobName));
+                // Filter builds by configured username if available, checking authorEmail in changeSets
+                const filteredBuilds = configuredUsername
+                    ? builds.filter(build => {
+                        // console.log(`Build #${build.number} changeSets:`, build.changeSets); // Log changeSets for debugging
+                        return build.changeSets?.some(changeSet =>
+                            changeSet.items?.some(item => {
+                                // console.log(`Build #${build.number} changeSet item authorEmail:`, item.authorEmail); // Log authorEmail for debugging
+                                return item.authorEmail && item.authorEmail.toLowerCase() === configuredUsername;
+                            })
+                        );
+                    })
+                    : builds; // If no username configured, show all builds
+
+                if (filteredBuilds.length > 0) {
+                    // Sort builds by number in descending order
+                    filteredBuilds.sort((a, b) => b.number - a.number);
+                    return filteredBuilds.map(build => new JenkinsBuildItem(`${build.changeSets[0].items[0].commitId}`, `${build.changeSets[0].items[0].msg}`,build, vscode.TreeItemCollapsibleState.None, jobName));
+                } else {
+                    vscode.window.showWarningMessage(`No builds for configured user ${configuredUsername}, showing last ${builds.length} builds`);
+                    return builds.map(build => new JenkinsBuildItem(`${build.changeSets[0].items[0].commitId}`, `${build.changeSets[0].items[0].msg}`, build, vscode.TreeItemCollapsibleState.None, jobName));
+                }
             } else {
                 return [new vscode.TreeItem('No builds found.', vscode.TreeItemCollapsibleState.None)];
             }

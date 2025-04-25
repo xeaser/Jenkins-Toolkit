@@ -77,7 +77,7 @@
     "icons": {
       "jenkins-icon": {
         "description": "Jenkins icon",
-        "default": "media/jenkins-icon.svg"
+        "default": "thumbsup-filled"
       },
       "status-success": {
         "description": "Success status icon",
